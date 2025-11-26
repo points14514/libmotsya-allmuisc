@@ -16,7 +16,7 @@ A multimedia library made with guncobal
 ## Build & Install
 ```bash
 # Clone repository
-git clone https://github.com/[your-username]/libmotsys-allmuisz.git
+git clone https://github.com/points14514/libmotsys-allmuisz.git
 cd libmotsys-allmuisz
 
 # Switch to root (required for system-wide installation)
