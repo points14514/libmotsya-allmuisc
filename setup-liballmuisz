@@ -1,0 +1,65 @@
+#!/bin/bash
+# Installation script for libmotsys-allmuisz
+# Compatible with Termux, Ubuntu, Fedora, Debian, and other Linux distributions
+
+# Check if running as root (required for system-wide installation)
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Error: This script requires root privileges. Please run with sudo or switch to root."
+    exit 1
+fi
+
+# Check if required tools are installed
+required_tools=("cobc" "gcc" "make" "install")
+for tool in "${required_tools[@]}"; do
+    if ! command -v "$tool" &> /dev/null; then
+        echo "Error: Required tool '$tool' not found. Please install it first."
+        exit 1
+    fi
+done
+
+# Check GnuCOBOL version (minimum 3.1.2)
+cobol_version=$(cobc -V | grep -oP 'GnuCOBOL \K[0-9]+\.[0-9]+\.[0-9]+')
+if [[ -z "$cobol_version" ]]; then
+    echo "Warning: Could not verify GnuCOBOL version. Proceeding with installation..."
+else
+    IFS='.' read -r major minor patch <<< "$cobol_version"
+    if (( major < 3 )) || (( major == 3 && minor < 1 )) || (( major == 3 && minor == 1 && patch < 2 )); then
+        echo "Error: GnuCOBOL version 3.1.2 or higher is required. Current version: $cobol_version"
+        exit 1
+    fi
+fi
+
+# Build the library
+echo "Step 1/3: Building libcobolmotsys.so..."
+make clean && make
+if [ $? -ne 0 ]; then
+    echo "Error: Build failed. Please check dependencies and try again."
+    exit 1
+fi
+
+# Install the library and header file
+echo "Step 2/3: Installing to system directories..."
+make install
+if [ $? -ne 0 ]; then
+    echo "Error: Installation failed. Please check directory permissions."
+    exit 1
+fi
+
+# Verify installation
+echo "Step 3/3: Verifying installation..."
+library_path="${PREFIX}/lib/${TARGET_LIB:-libcobolmotsys.so}"
+header_path="${PREFIX}/include/cobolall/muisc.h"
+
+if [ -f "$library_path" ] && [ -f "$header_path" ]; then
+    echo "=============================================="
+    echo "Installation Successful!"
+    echo "----------------------------------------------"
+    echo "Shared Library: $library_path"
+    echo "Header File:    $header_path"
+    echo "----------------------------------------------"
+    echo "See README.md for usage examples and API docs"
+    echo "=============================================="
+else
+    echo "Error: Installation verification failed. Files not found."
+    exit 1
+fi
